@@ -1,1 +1,12 @@
-
+{
+  "name": "gta-news-bot",
+  "version": "1.0.0",
+  "description": "GTA Glitches Discord Webhook",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9"
+  }
+}
