@@ -1,14 +1,14 @@
 const axios = require("axios");
 const fs = require("fs");
 
-const WEBHOOK_URL = process.env.DISCORD_WEDHOOK;
+const WEBHOOK_URL = process.env.DISCORD_WEBHOOK;
 
 const REDDIT_URL = "https://www.reddit.com/r/GTAGlitches/new.json?limit=5";
 
 async function enviarNoticias() {
     try {
         if (!WEBHOOK_URL) {
-            throw new Error("No existe el secreto DISCORD_WEDHOOK");
+            throw new Error("No existe el secreto DISCORD_WEBHOOK");
         }
 
         const respuesta = await axios.get(REDDIT_URL, {
@@ -40,16 +40,16 @@ async function enviarNoticias() {
                         url: `https://reddit.com${noticia.permalink}`,
                         description:
                             noticia.selftext?.substring(0, 1500) ||
-                            "Se encontró un nuevo glitch en GTA V.",
+                            "Nuevo glitch encontrado en GTA V.",
                         color: 16711680,
                         fields: [
                             {
-                                name: "Autor",
+                                name: "👤 Autor",
                                 value: noticia.author || "Desconocido",
                                 inline: true
                             },
                             {
-                                name: "Comentarios",
+                                name: "💬 Comentarios",
                                 value: String(noticia.num_comments),
                                 inline: true
                             }
@@ -62,12 +62,11 @@ async function enviarNoticias() {
                 ]
             };
 
-            const envio = await axios.post(WEBHOOK_URL, mensaje);
+            await axios.post(WEBHOOK_URL, mensaje);
 
-            if (envio.status === 204 || envio.status === 200) {
-                fs.writeFileSync("last post.txt", noticia.id);
-                console.log("Noticia enviada:", noticia.title);
-            }
+            fs.writeFileSync("last post.txt", noticia.id);
+
+            console.log("Noticia enviada:", noticia.title);
 
             break;
         }
