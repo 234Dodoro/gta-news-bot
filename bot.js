@@ -7,9 +7,13 @@ const REDDIT_URL = "https://www.reddit.com/r/GTAGlitches/new.json?limit=5";
 
 async function enviarNoticias() {
     try {
+        if (!WEBHOOK_URL) {
+            throw new Error("No existe el secreto DISCORD_WEDHOOK");
+        }
+
         const respuesta = await axios.get(REDDIT_URL, {
             headers: {
-                "User-Agent": "GTA-Glitches-Webhook"
+                "User-Agent": "GTA-Glitches-Webhook/1.0"
             }
         });
 
@@ -18,10 +22,10 @@ async function enviarNoticias() {
         let ultimoPost = "";
 
         if (fs.existsSync("last post.txt")) {
-            ultimoPost = fs.readFileSync("last post.txt", "utf8");
+            ultimoPost = fs.readFileSync("last post.txt", "utf8").trim();
         }
 
-        for (const post of posts.reverse()) {
+        for (const post of posts) {
             const noticia = post.data;
 
             if (noticia.id === ultimoPost) {
@@ -29,35 +33,50 @@ async function enviarNoticias() {
             }
 
             const mensaje = {
-                username: "GTA V Glitches",
-                avatar_url: "https://i.imgur.com/4M34hi2.png",
+                username: "🚨 GTA V Glitches",
                 embeds: [
                     {
-                        title: noticia.title,
-                        url: "https://reddit.com" + noticia.permalink,
-                        description: noticia.selftext
-                            ? noticia.selftext.substring(0, 1000)
-                            : "Nuevo glitch encontrado en GTA V.",
+                        title: noticia.title || "Nuevo glitch encontrado",
+                        url: `https://reddit.com${noticia.permalink}`,
+                        description:
+                            noticia.selftext?.substring(0, 1500) ||
+                            "Se encontró un nuevo glitch en GTA V.",
                         color: 16711680,
+                        fields: [
+                            {
+                                name: "Autor",
+                                value: noticia.author || "Desconocido",
+                                inline: true
+                            },
+                            {
+                                name: "Comentarios",
+                                value: String(noticia.num_comments),
+                                inline: true
+                            }
+                        ],
                         footer: {
                             text: "Fuente: Reddit r/GTAGlitches"
                         },
-                        timestamp: new Date()
+                        timestamp: new Date().toISOString()
                     }
                 ]
             };
 
-            await axios.post(WEBHOOK_URL, mensaje);
+            const envio = await axios.post(WEBHOOK_URL, mensaje);
 
-            fs.writeFileSync("last post.txt", noticia.id);
-
-            console.log("Noticia enviada:", noticia.title);
+            if (envio.status === 204 || envio.status === 200) {
+                fs.writeFileSync("last post.txt", noticia.id);
+                console.log("Noticia enviada:", noticia.title);
+            }
 
             break;
         }
 
     } catch (error) {
-        console.log("Error:", error.message);
+        console.log(
+            "ERROR:",
+            error.response?.data || error.message
+        );
     }
 }
 
