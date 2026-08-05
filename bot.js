@@ -3,7 +3,7 @@ const fs = require("fs");
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK;
 
-const REDDIT_URL = "https://www.reddit.com/r/GTAGlitches/new.json?limit=5";
+const REDDIT_URL = "https://www.reddit.com/r/GTAGlitches/new.json?limit=5&raw_json=1";
 
 async function enviarNoticias() {
     try {
@@ -13,9 +13,13 @@ async function enviarNoticias() {
 
         const respuesta = await axios.get(REDDIT_URL, {
             headers: {
-                "User-Agent": "GTA-Glitches-Webhook/1.0"
+                "User-Agent": "Mozilla/5.0 GTA-News-Webhook/1.0"
             }
         });
+
+        if (!respuesta.data?.data?.children) {
+            throw new Error("Reddit no devolvió datos válidos");
+        }
 
         const posts = respuesta.data.data.children;
 
@@ -36,21 +40,22 @@ async function enviarNoticias() {
                 username: "🚨 GTA V Glitches",
                 embeds: [
                     {
-                        title: noticia.title || "Nuevo glitch encontrado",
+                        title: noticia.title,
                         url: `https://reddit.com${noticia.permalink}`,
                         description:
-                            noticia.selftext?.substring(0, 1500) ||
-                            "Nuevo glitch encontrado en GTA V.",
+                            noticia.selftext
+                                ? noticia.selftext.substring(0, 1500)
+                                : "Nuevo glitch encontrado en GTA V.",
                         color: 16711680,
                         fields: [
                             {
-                                name: "👤 Autor",
+                                name: "👤 Usuario",
                                 value: noticia.author || "Desconocido",
                                 inline: true
                             },
                             {
-                                name: "💬 Comentarios",
-                                value: String(noticia.num_comments),
+                                name: "⬆️ Votos",
+                                value: String(noticia.ups || 0),
                                 inline: true
                             }
                         ],
@@ -62,11 +67,12 @@ async function enviarNoticias() {
                 ]
             };
 
-            await axios.post(WEBHOOK_URL, mensaje);
+            const envio = await axios.post(WEBHOOK_URL, mensaje);
 
-            fs.writeFileSync("last post.txt", noticia.id);
-
-            console.log("Noticia enviada:", noticia.title);
+            if (envio.status === 204 || envio.status === 200) {
+                fs.writeFileSync("last post.txt", noticia.id);
+                console.log("Noticia enviada:", noticia.title);
+            }
 
             break;
         }
