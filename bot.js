@@ -3,7 +3,7 @@ const fs = require("fs");
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK;
 
-const REDDIT_URL = "https://www.reddit.com/r/GTAGlitches/new.json?limit=5&raw_json=1";
+const REDDIT_URL = "https://old.reddit.com/r/GTAGlitches/new.json?limit=5";
 
 async function enviarNoticias() {
     try {
@@ -13,13 +13,9 @@ async function enviarNoticias() {
 
         const respuesta = await axios.get(REDDIT_URL, {
             headers: {
-                "User-Agent": "Mozilla/5.0 GTA-News-Webhook/1.0"
+                "User-Agent": "GTA-Glitches-Bot/1.0 by DiscordWebhook"
             }
         });
-
-        if (!respuesta.data?.data?.children) {
-            throw new Error("Reddit no devolvió datos válidos");
-        }
 
         const posts = respuesta.data.data.children;
 
@@ -42,23 +38,10 @@ async function enviarNoticias() {
                     {
                         title: noticia.title,
                         url: `https://reddit.com${noticia.permalink}`,
-                        description:
-                            noticia.selftext
-                                ? noticia.selftext.substring(0, 1500)
-                                : "Nuevo glitch encontrado en GTA V.",
+                        description: noticia.selftext
+                            ? noticia.selftext.substring(0, 1500)
+                            : "Nuevo glitch encontrado en GTA V.",
                         color: 16711680,
-                        fields: [
-                            {
-                                name: "👤 Usuario",
-                                value: noticia.author || "Desconocido",
-                                inline: true
-                            },
-                            {
-                                name: "⬆️ Votos",
-                                value: String(noticia.ups || 0),
-                                inline: true
-                            }
-                        ],
                         footer: {
                             text: "Fuente: Reddit r/GTAGlitches"
                         },
@@ -67,12 +50,11 @@ async function enviarNoticias() {
                 ]
             };
 
-            const envio = await axios.post(WEBHOOK_URL, mensaje);
+            await axios.post(WEBHOOK_URL, mensaje);
 
-            if (envio.status === 204 || envio.status === 200) {
-                fs.writeFileSync("last post.txt", noticia.id);
-                console.log("Noticia enviada:", noticia.title);
-            }
+            fs.writeFileSync("last post.txt", noticia.id);
+
+            console.log("Noticia enviada:", noticia.title);
 
             break;
         }
