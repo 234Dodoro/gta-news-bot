@@ -19,7 +19,6 @@ async function enviarGlitchNuevo() {
 
         const texto = respuesta.data;
 
-        // Extraer únicamente el JSON del archivo JavaScript
         const inicio = texto.indexOf("{");
         const final = texto.lastIndexOf("}");
 
@@ -43,7 +42,6 @@ async function enviarGlitchNuevo() {
             ultimoGlitch = fs.readFileSync("last post.txt", "utf8").trim();
         }
 
-        // El primero de la lista es el más reciente
         const nuevo = glitches[0];
 
         if (nuevo.url === ultimoGlitch) {
@@ -55,21 +53,32 @@ async function enviarGlitchNuevo() {
             username: "🚨 GTA V Glitches",
             embeds: [
                 {
-                    title: nuevo.title || "Nuevo glitch encontrado",
+                    title: `🔥 ${nuevo.title || "Nuevo glitch encontrado"}`,
                     url: nuevo.url,
+
                     description:
-                        "🆕 Nuevo glitch encontrado en GTA Online.",
+                        "🆕 **Nuevo glitch encontrado en GTA Online**\n\n" +
+                        "📌 Para ver los requisitos, pasos y detalles completos, abre el enlace de abajo.",
+
                     color: 16711680,
+
                     fields: [
+                        {
+                            name: "🔗 Guía del glitch",
+                            value: `[Abrir información completa](${nuevo.url})`,
+                            inline: false
+                        },
                         {
                             name: "📂 Categoría",
                             value: nuevo.categoryId || "Sin categoría",
                             inline: true
                         }
                     ],
+
                     footer: {
                         text: "Fuente: GTAGlitches"
                     },
+
                     timestamp: new Date().toISOString()
                 }
             ]
