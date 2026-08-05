@@ -1,1 +1,27 @@
+name: GTA Glitches Webhook
 
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ejecutar-webhook:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar webhook
+        env:
+          DISCORD_WEDHOOK: ${{ secrets.DISCORD_WEDHOOK }}
+        run: node bot.js
