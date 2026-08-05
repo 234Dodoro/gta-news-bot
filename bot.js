@@ -3,61 +3,74 @@ const fs = require("fs");
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK;
 
-const REDDIT_URL = "https://old.reddit.com/r/GTAGlitches/new.json?limit=5";
+const DATA_URL = "https://gtaglitches.com/js/working-glitches-data.20260804a.js";
 
-async function enviarNoticias() {
+async function enviarGlitchNuevo() {
     try {
         if (!WEBHOOK_URL) {
             throw new Error("No existe el secreto DISCORD_WEBHOOK");
         }
 
-        const respuesta = await axios.get(REDDIT_URL, {
+        const respuesta = await axios.get(DATA_URL, {
             headers: {
-                "User-Agent": "GTA-Glitches-Bot/1.0 by DiscordWebhook"
+                "User-Agent": "GTA-Glitches-Webhook/1.0"
             }
         });
 
-        const posts = respuesta.data.data.children;
+        const texto = respuesta.data;
 
-        let ultimoPost = "";
+        // Extraer el JSON que está dentro de window.WORKING_GLITCHES_DATA
+        const inicio = texto.indexOf("{");
+        const datos = JSON.parse(texto.substring(inicio));
+
+        const glitches = datos.items;
+
+        if (!glitches || glitches.length === 0) {
+            throw new Error("No se encontraron glitches");
+        }
+
+        let ultimoGlitch = "";
 
         if (fs.existsSync("last post.txt")) {
-            ultimoPost = fs.readFileSync("last post.txt", "utf8").trim();
+            ultimoGlitch = fs.readFileSync("last post.txt", "utf8").trim();
         }
 
-        for (const post of posts) {
-            const noticia = post.data;
+        const nuevo = glitches[0];
 
-            if (noticia.id === ultimoPost) {
-                continue;
-            }
-
-            const mensaje = {
-                username: "🚨 GTA V Glitches",
-                embeds: [
-                    {
-                        title: noticia.title,
-                        url: `https://reddit.com${noticia.permalink}`,
-                        description: noticia.selftext
-                            ? noticia.selftext.substring(0, 1500)
-                            : "Nuevo glitch encontrado en GTA V.",
-                        color: 16711680,
-                        footer: {
-                            text: "Fuente: Reddit r/GTAGlitches"
-                        },
-                        timestamp: new Date().toISOString()
-                    }
-                ]
-            };
-
-            await axios.post(WEBHOOK_URL, mensaje);
-
-            fs.writeFileSync("last post.txt", noticia.id);
-
-            console.log("Noticia enviada:", noticia.title);
-
-            break;
+        if (nuevo.url === ultimoGlitch) {
+            console.log("No hay glitches nuevos");
+            return;
         }
+
+        const mensaje = {
+            username: "🚨 GTA V Glitches",
+            embeds: [
+                {
+                    title: nuevo.title,
+                    url: nuevo.url,
+                    description:
+                        "🆕 Nuevo glitch encontrado en GTA Online.",
+                    color: 16711680,
+                    fields: [
+                        {
+                            name: "📂 Categoría",
+                            value: nuevo.categoryId || "Sin categoría",
+                            inline: true
+                        }
+                    ],
+                    footer: {
+                        text: "Fuente: GTAGlitches"
+                    },
+                    timestamp: new Date().toISOString()
+                }
+            ]
+        };
+
+        await axios.post(WEBHOOK_URL, mensaje);
+
+        fs.writeFileSync("last post.txt", nuevo.url);
+
+        console.log("Glitch enviado:", nuevo.title);
 
     } catch (error) {
         console.log(
@@ -67,4 +80,4 @@ async function enviarNoticias() {
     }
 }
 
-enviarNoticias();
+enviarGlitchNuevo();
