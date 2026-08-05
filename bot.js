@@ -19,9 +19,17 @@ async function enviarGlitchNuevo() {
 
         const texto = respuesta.data;
 
-        // Extraer el JSON que está dentro de window.WORKING_GLITCHES_DATA
+        // Extraer únicamente el JSON del archivo JavaScript
         const inicio = texto.indexOf("{");
-        const datos = JSON.parse(texto.substring(inicio));
+        const final = texto.lastIndexOf("}");
+
+        if (inicio === -1 || final === -1) {
+            throw new Error("No se encontró el JSON de glitches");
+        }
+
+        const jsonLimpio = texto.substring(inicio, final + 1);
+
+        const datos = JSON.parse(jsonLimpio);
 
         const glitches = datos.items;
 
@@ -35,6 +43,7 @@ async function enviarGlitchNuevo() {
             ultimoGlitch = fs.readFileSync("last post.txt", "utf8").trim();
         }
 
+        // El primero de la lista es el más reciente
         const nuevo = glitches[0];
 
         if (nuevo.url === ultimoGlitch) {
@@ -46,7 +55,7 @@ async function enviarGlitchNuevo() {
             username: "🚨 GTA V Glitches",
             embeds: [
                 {
-                    title: nuevo.title,
+                    title: nuevo.title || "Nuevo glitch encontrado",
                     url: nuevo.url,
                     description:
                         "🆕 Nuevo glitch encontrado en GTA Online.",
