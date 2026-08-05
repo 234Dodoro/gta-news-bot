@@ -16,12 +16,12 @@ jobs:
       - name: Instalar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Instalar dependencias
         run: npm install
 
       - name: Ejecutar webhook
         env:
-          DISCORD_WEDHOOK: ${{ secrets.DISCORD_WEDHOOK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: node bot.js
